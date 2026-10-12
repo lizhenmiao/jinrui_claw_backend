@@ -1,0 +1,46 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: xlx-admin-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: xlx_admin
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    volumes:
+      - xlx_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p123456"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  admin:
+    image: xlx-admin-java-mybatisplus:0.1.1
+    container_name: xlx-admin-java
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_URL: jdbc:mysql://mysql:3306/xlx_admin?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 123456
+      XLX_ADMIN_USERNAME: admin
+      XLX_ADMIN_PASSWORD: 123456
+      XLX_UPLOAD_DIR: /app/data/uploads/versions
+      XLX_PUBLIC_BASE_URL: http://127.0.0.1:15000
+      JAVA_OPTS: -Xms128m -Xmx512m
+      TZ: Asia/Shanghai
+    ports:
+      - "15000:15000"
+    volumes:
+      - xlx_admin_data:/app/data
+
+volumes:
+  xlx_mysql_data:
+  xlx_admin_data:

@@ -1,0 +1,1627 @@
+﻿{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "灏忛緳铏惧悗鍙版帴鍙ｆ枃妗?,
+    "description": "灏忛緳铏?U鐩樼増 Java 鍚庡彴绗竴鐗堟帴鍙ｃ€傚寘鍚鎴风鎺堟潈鏍￠獙銆佽澶囧績璺炽€佹鏌ユ洿鏂般€佸悓姝ユā鍨嬨€佷簨浠朵笂鎶ワ紝浠ュ強鍚庡彴 JWT 鐧诲綍銆佹巿鏉冦€佽澶囥€佺増鏈€佹ā鍨嬨€佷簨浠剁鐞嗘帴鍙ｃ€?,
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:15000",
+      "description": "鏈湴寮€鍙戠幆澧?
+    },
+    {
+      "url": "http://localhost:15000",
+      "description": "鏈湴寮€鍙戠幆澧?localhost"
+    }
+  ],
+  "tags": [
+    {
+      "name": "瀹㈡埛绔帴鍙?,
+      "description": "缁欏皬榫欒櫨 U鐩樺鎴风璋冪敤锛屼笉闇€瑕佸悗鍙板彛浠?
+    },
+    {
+      "name": "鍚庡彴绠＄悊鎺ュ彛",
+      "description": "缁欏悗鍙扮鐞嗛〉闈㈡垨 Apifox 璋冭瘯浣跨敤锛岄渶瑕?Authorization Bearer JWT"
+    }
+  ],
+  "paths": {
+    "/api/client/license/check": {
+      "post": {
+        "tags": [
+          "瀹㈡埛绔帴鍙?
+        ],
+        "summary": "瀹㈡埛绔巿鏉冩牎楠?,
+        "description": "灏忛緳铏惧鎴风鍚姩鏃惰皟鐢ㄣ€傛牎楠屾巿鏉冪爜鏄惁瀛樺湪銆佹槸鍚︾鐢ㄣ€佹槸鍚﹁繃鏈熴€乁鐩業D鏄惁鍖归厤銆傞娆′娇鐢ㄦ椂濡傛灉鎺堟潈鏈粦瀹歎鐩橈紝浼氳嚜鍔ㄧ粦瀹氬綋鍓?usbId锛屽苟璁板綍璁惧鍚姩淇℃伅銆?,
+        "operationId": "clientLicenseCheck",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LicenseCheckRequest"
+              },
+              "example": {
+                "licenseKey": "XLX-DEMO-0001",
+                "usbId": "USB-TEST-001",
+                "machineId": "MACHINE-TEST-001",
+                "hostname": "TEST-PC",
+                "os": "Windows 11",
+                "arch": "x64",
+                "driveFs": "exFAT",
+                "clientVersion": "2026.7.24"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "鎺堟潈鏍￠獙缁撴灉",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseCheckResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "鎺堟潈姝ｅ父",
+                    "value": {
+                      "ok": true,
+                      "code": "OK",
+                      "message": "鎺堟潈姝ｅ父",
+                      "data": {
+                        "status": "active",
+                        "allowUpdate": true,
+                        "channel": "stable",
+                        "modelGroup": "default"
+                      }
+                    }
+                  },
+                  "notFound": {
+                    "summary": "鎺堟潈涓嶅瓨鍦?,
+                    "value": {
+                      "ok": false,
+                      "code": "LICENSE_NOT_FOUND",
+                      "message": "鎺堟潈涓嶅瓨鍦?,
+                      "data": null
+                    }
+                  },
+                  "usbMismatch": {
+                    "summary": "U鐩樹笉鍖归厤",
+                    "value": {
+                      "ok": false,
+                      "code": "USB_MISMATCH",
+                      "message": "鎺堟潈涓庡綋鍓峌鐩樹笉鍖归厤",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/device/ping": {
+      "post": {
+        "tags": [
+          "瀹㈡埛绔帴鍙?
+        ],
+        "summary": "瀹㈡埛绔澶囧績璺?,
+        "description": "瀹㈡埛绔惎鍔ㄥ悗鎴栬繍琛屼腑瀹氭椂涓婃姤璁惧鐘舵€併€傚悗鍙颁細璁板綍鏈€杩戝湪绾挎椂闂淬€佸惎鍔ㄦ鏁般€佸鎴风鐗堟湰銆佺郴缁熴€乁鐩樻枃浠剁郴缁熺瓑銆?,
+        "operationId": "clientDevicePing",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevicePingRequest"
+              },
+              "example": {
+                "licenseKey": "XLX-DEMO-0001",
+                "usbId": "USB-TEST-001",
+                "machineId": "MACHINE-TEST-001",
+                "hostname": "TEST-PC",
+                "os": "Windows 11",
+                "arch": "x64",
+                "driveFs": "exFAT",
+                "clientVersion": "2026.7.24"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "璁惧璁板綍",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/update/check": {
+      "post": {
+        "tags": [
+          "瀹㈡埛绔帴鍙?
+        ],
+        "summary": "瀹㈡埛绔鏌ユ洿鏂?,
+        "description": "鏍规嵁鎺堟潈鐮併€佸綋鍓嶇増鏈拰閫氶亾妫€鏌ユ槸鍚︽湁鏂扮増鏈€傚悗鍙板彧杩斿洖宸插彂甯冪増鏈€?,
+        "operationId": "clientUpdateCheck",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCheckRequest"
+              },
+              "example": {
+                "licenseKey": "XLX-DEMO-0001",
+                "usbId": "USB-TEST-001",
+                "currentVersion": "2026.7.20",
+                "channel": "stable"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "鏇存柊妫€鏌ョ粨鏋?,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateCheckResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/models/config": {
+      "post": {
+        "tags": [
+          "瀹㈡埛绔帴鍙?
+        ],
+        "summary": "瀹㈡埛绔悓姝ュ唴缃ā鍨嬮厤缃?,
+        "description": "瀹㈡埛绔粠鍚庡彴鎷夊彇鍐呯疆妯″瀷渚涘簲鍟嗛厤缃紝渚嬪閿﹂攼鍐呯疆绠楀姏銆傚鎴风鏀跺埌鍚庡彲鍐欏叆 openclaw.json銆?,
+        "operationId": "clientModelsConfig",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelConfigRequest"
+              },
+              "example": {
+                "licenseKey": "XLX-DEMO-0001",
+                "usbId": "USB-TEST-001",
+                "clientVersion": "2026.7.24",
+                "channel": "stable"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "妯″瀷閰嶇疆",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelConfigResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/client/event": {
+      "post": {
+        "tags": [
+          "瀹㈡埛绔帴鍙?
+        ],
+        "summary": "瀹㈡埛绔簨浠朵笂鎶?,
+        "description": "瀹㈡埛绔笂鎶ュ敭鍚庤瘖鏂簨浠讹紝渚嬪鍚姩澶辫触銆佸井淇′簩缁寸爜瓒呮椂銆丵Q绂荤嚎銆佹ā鍨嬭璇佸け璐ョ瓑銆備笉瑕佷笂浼犺亰澶╁唴瀹广€佺敤鎴锋枃浠跺唴瀹广€丄PI Key鏄庢枃绛夐殣绉佷俊鎭€?,
+        "operationId": "clientEvent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientEventRequest"
+              },
+              "example": {
+                "licenseKey": "XLX-DEMO-0001",
+                "usbId": "USB-TEST-001",
+                "machineId": "MACHINE-TEST-001",
+                "eventType": "wechat_qr_timeout",
+                "level": "warn",
+                "message": "寰俊浜岀淮鐮佽幏鍙栬秴鏃?,
+                "details": {
+                  "clientVersion": "2026.7.24",
+                  "driveFs": "exFAT",
+                  "gateway": "running",
+                  "configServer": "running"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "浜嬩欢璁板綍",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientEventRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/auth/login": {
+      "post": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "鍚庡彴JWT鐧诲綍",
+        "description": "鍚庡彴椤甸潰璋冪敤銆傜敤鎴峰悕瀵嗙爜姝ｇ‘鍚庤繑鍥濲WT锛屽悗缁鐞嗘帴鍙ｄ娇鐢?Authorization: Bearer <accessToken>銆?,
+        "operationId": "adminLogin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLoginRequest"
+              },
+              "example": {
+                "username": "admin",
+                "password": "admin123456"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "鐧诲綍缁撴灉",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLoginResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "鐧诲綍鎴愬姛",
+                    "value": {
+                      "ok": true,
+                      "code": "OK",
+                      "message": "鐧诲綍鎴愬姛",
+                      "data": {
+                        "tokenType": "Bearer",
+                        "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+                        "expiresIn": 86400,
+                        "username": "admin"
+                      }
+                    }
+                  },
+                  "failed": {
+                    "summary": "鐧诲綍澶辫触",
+                    "value": {
+                      "ok": false,
+                      "code": "LOGIN_FAILED",
+                      "message": "鐢ㄦ埛鍚嶆垨瀵嗙爜涓嶆纭?,
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/summary": {
+      "get": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "鍚庡彴棣栭〉缁熻",
+        "description": "缁熻鎺堟潈鏁伴噺銆佹湁鏁堟巿鏉冦€佽澶囨暟閲忋€佺増鏈暟閲忋€佹ā鍨嬫暟閲忋€佷簨浠舵暟閲忋€?4灏忔椂閿欒鏁般€?,
+        "operationId": "adminSummary",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "棣栭〉缁熻",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/licenses": {
+      "get": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "鎺堟潈鍒楄〃",
+        "description": "鏌ョ湅鎵€鏈夋巿鏉冪爜鍜岀粦瀹氱姸鎬併€?,
+        "operationId": "adminLicenses",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "鎺堟潈鍒楄〃",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "鏂板缓鎺堟潈",
+        "description": "鍒涘缓涓€涓彲鍞崠鎴栨祴璇曠殑灏忛緳铏炬巿鏉冪爜銆?,
+        "operationId": "adminCreateLicense",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LicenseSaveRequest"
+      }
+              "example": {
+                "licenseKey": "XLX-DEMO-0001",
+                "customerName": "婕旂ず瀹㈡埛",
+                "usbId": "",
+                "status": "active",
+                "expiresAt": "2027-07-24T23:59:59",
+                "allowUpdate": true,
+                "channel": "stable",
+                "modelGroup": "default"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "鏂板缓缁撴灉",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/licenses/{id}": {
+      "patch": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "淇敼鎺堟潈",
+        "description": "淇敼鎺堟潈鐘舵€併€佸埌鏈熸椂闂淬€乁鐩樼粦瀹氥€佹洿鏂版潈闄愩€侀€氶亾銆佹ā鍨嬪垎缁勭瓑銆?,
+        "operationId": "adminUpdateLicense",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+      }
+            "description": "鎺堟潈ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LicenseSaveRequest"
+              },
+              "example": {
+                "licenseKey": "XLX-DEMO-0001",
+                "customerName": "婕旂ず瀹㈡埛",
+                "usbId": "USB-TEST-001",
+                "status": "active",
+                "expiresAt": "2027-07-24T23:59:59",
+                "allowUpdate": true,
+                "channel": "stable",
+                "modelGroup": "default"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "淇敼缁撴灉",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/devices": {
+      "get": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "璁惧鍒楄〃",
+        "description": "鏌ョ湅瀹㈡埛绔渶杩戝惎鍔ㄨ繃鐨勭數鑴戝拰U鐩樹俊鎭€?,
+        "operationId": "adminDevices",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "璁惧鍒楄〃",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/versions": {
+      "get": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "鐗堟湰鍒楄〃",
+        "description": "鏌ョ湅宸查厤缃殑鏇存柊鐗堟湰銆?,
+        "operationId": "adminVersions",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "鐗堟湰鍒楄〃",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "鏂板缓鐗堟湰",
+        "description": "閰嶇疆瀹㈡埛绔彲妫€鏌ュ埌鐨勬柊鐗堟湰銆?,
+        "operationId": "adminCreateVersion",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionSaveRequest"
+      }
+              "example": {
+                "version": "2026.7.25",
+                "channel": "stable",
+                "title": "灏忛緳铏綰鐩樼増 2026.7.25",
+                "releaseNotes": "淇寰俊浜岀淮鐮佽秴鏃禱n淇exFAT U鐩樺惎鍔ㄥけ璐n浼樺寲棣栨鍚姩閫熷害",
+                "downloadUrl": "https://example.com/openclaw-update-20260725.zip",
+                "sha256": "鏇挎崲鎴愮湡瀹瀞ha256",
+                "forceUpdate": false,
+                "published": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "鏂板缓缁撴灉",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/versions/{id}": {
+      "patch": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "淇敼鐗堟湰",
+        "description": "璋冩暣鐗堟湰鍙戝竷鐘舵€併€佷笅杞藉湴鍧€銆佸己鍒舵洿鏂般€佹洿鏂拌鏄庣瓑淇℃伅銆?,
+        "operationId": "adminUpdateVersion",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+      }
+            "description": "鐗堟湰ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionSaveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "淇敼缁撴灉",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/models": {
+      "get": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "妯″瀷鍒楄〃",
+        "description": "鏌ョ湅鍚庡彴鍐呯疆妯″瀷渚涘簲鍟嗛厤缃€?,
+        "operationId": "adminModels",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "妯″瀷鍒楄〃",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelProviderListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "鏂板缓妯″瀷渚涘簲鍟?,
+        "description": "鏂板涓€涓悗鍙板彲涓嬪彂缁欏鎴风鐨勬ā鍨嬩緵搴斿晢銆?,
+        "operationId": "adminCreateModel",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelProviderSaveRequest"
+      }
+              "example": {
+                "providerId": "jinrui-deepseek",
+                "displayName": "閿﹂攼鍐呯疆绠楀姏",
+                "apiType": "openai-completions",
+                "baseUrl": "http://192.168.0.212:13000/v1",
+                "apiKey": "sk-鏇挎崲鎴愮湡瀹瀔ey",
+                "modelsJson": "[{\"id\":\"deepseek-v4-flash\",\"name\":\"deepseek-v4-flash\",\"reasoning\":false,\"enabled\":true}]",
+                "defaultModel": "deepseek-v4-flash",
+                "enabled": true,
+                "channel": "stable",
+                "modelGroup": "default",
+                "forceDefault": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "鏂板缓缁撴灉",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelProviderRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/models/{id}": {
+      "patch": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "淇敼妯″瀷渚涘簲鍟?,
+        "description": "鏇存柊妯″瀷渚涘簲鍟?Base URL銆丄PI Key銆佹ā鍨嬪垪琛ㄣ€侀粯璁ゆā鍨嬪拰鍚敤鐘舵€併€俛piKey 浼?******** 琛ㄧず涓嶄慨鏀瑰師 key銆?,
+        "operationId": "adminUpdateModel",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+      }
+            "description": "妯″瀷渚涘簲鍟咺D"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelProviderSaveRequest"
+              },
+              "example": {
+                "providerId": "jinrui-deepseek",
+                "displayName": "閿﹂攼鍐呯疆绠楀姏",
+                "apiType": "openai-completions",
+                "baseUrl": "http://192.168.0.212:13000/v1",
+                "apiKey": "********",
+                "modelsJson": "[{\"id\":\"deepseek-v4-flash\",\"name\":\"deepseek-v4-flash\",\"reasoning\":false,\"enabled\":true}]",
+                "defaultModel": "deepseek-v4-flash",
+                "enabled": true,
+                "channel": "stable",
+                "modelGroup": "default",
+                "forceDefault": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "淇敼缁撴灉",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelProviderRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/events": {
+      "get": {
+        "tags": [
+          "鍚庡彴绠＄悊鎺ュ彛"
+        ],
+        "summary": "浜嬩欢鏃ュ織鍒楄〃",
+        "description": "鏌ョ湅瀹㈡埛绔笂鎶ョ殑鏈€杩?00鏉″敭鍚庤瘖鏂簨浠躲€?,
+        "operationId": "adminEvents",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "浜嬩欢鏃ュ織鍒楄〃",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientEventListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "鍚庡彴鐧诲綍鍚庤繑鍥炵殑 JWT锛屾牸寮忥細Authorization: Bearer <accessToken>"
+      }
+    },
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "鏄惁鎴愬姛"
+          },
+          "code": {
+            "type": "string",
+            "description": "涓氬姟鐘舵€佺爜"
+          },
+          "message": {
+            "type": "string",
+            "description": "鎻愮ず娑堟伅"
+          },
+          "data": {
+            "description": "鍝嶅簲鏁版嵁"
+          }
+        }
+      },
+      "LicenseCheckRequest": {
+        "type": "object",
+        "required": [
+          "licenseKey",
+          "usbId"
+        ],
+        "properties": {
+          "licenseKey": {
+            "type": "string",
+            "description": "鎺堟潈鐮?
+          },
+          "usbId": {
+            "type": "string",
+            "description": "U鐩業D"
+          },
+          "machineId": {
+            "type": "string",
+            "description": "鏈哄櫒ID"
+          },
+          "hostname": {
+            "type": "string",
+            "description": "鐢佃剳鍚嶇О"
+          },
+          "os": {
+            "type": "string",
+            "description": "鎿嶄綔绯荤粺"
+          },
+          "arch": {
+            "type": "string",
+            "description": "绯荤粺鏋舵瀯"
+          },
+          "driveFs": {
+            "type": "string",
+            "description": "U鐩樻枃浠剁郴缁?
+          },
+          "clientVersion": {
+            "type": "string",
+            "description": "瀹㈡埛绔増鏈?
+          }
+        }
+      },
+      "DevicePingRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LicenseCheckRequest"
+          }
+        ]
+      },
+      "UpdateCheckRequest": {
+        "type": "object",
+        "required": [
+          "licenseKey"
+        ],
+        "properties": {
+          "licenseKey": {
+            "type": "string",
+            "description": "鎺堟潈鐮?
+          },
+          "usbId": {
+            "type": "string",
+            "description": "U鐩業D"
+          },
+          "currentVersion": {
+            "type": "string",
+            "description": "褰撳墠瀹㈡埛绔増鏈?
+          },
+          "channel": {
+            "type": "string",
+            "description": "鏇存柊閫氶亾"
+          }
+        }
+      },
+      "ModelConfigRequest": {
+        "type": "object",
+        "required": [
+          "licenseKey"
+        ],
+        "properties": {
+          "licenseKey": {
+            "type": "string",
+            "description": "鎺堟潈鐮?
+          },
+          "usbId": {
+            "type": "string",
+            "description": "U鐩業D"
+          },
+          "clientVersion": {
+            "type": "string",
+            "description": "瀹㈡埛绔増鏈?
+          },
+          "channel": {
+            "type": "string",
+            "description": "妯″瀷/鏇存柊閫氶亾"
+          }
+        }
+      },
+      "ClientEventRequest": {
+        "type": "object",
+        "properties": {
+          "licenseKey": {
+            "type": "string",
+            "description": "鎺堟潈鐮?
+          },
+          "usbId": {
+            "type": "string",
+            "description": "U鐩業D"
+          },
+          "machineId": {
+            "type": "string",
+            "description": "鏈哄櫒ID"
+          },
+          "eventType": {
+            "type": "string",
+            "description": "浜嬩欢绫诲瀷"
+          },
+          "level": {
+            "type": "string",
+            "description": "浜嬩欢绾у埆锛歩nfo銆亀arn銆乪rror"
+          },
+          "message": {
+            "type": "string",
+            "description": "浜嬩欢鎽樿"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "浜嬩欢璇︽儏JSON锛屼笉瑕佸寘鍚殣绉佸唴瀹规垨瀵嗛挜鏄庢枃"
+          }
+        }
+      },
+      "LicenseSaveRequest": {
+        "type": "object",
+        "properties": {
+          "licenseKey": {
+            "type": "string",
+            "description": "鎺堟潈鐮?
+          },
+          "customerName": {
+            "type": "string",
+            "description": "瀹㈡埛鍚嶇О"
+          },
+          "usbId": {
+            "type": "string",
+            "description": "缁戝畾鐨刄鐩業D锛岀┖瀛楃涓茶〃绀烘湭缁戝畾鎴栨竻绌虹粦瀹?
+          },
+          "status": {
+            "type": "string",
+            "description": "鎺堟潈鐘舵€侊細active銆乨isabled銆乪xpired銆乺evoked"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "鍒版湡鏃堕棿"
+          },
+          "allowUpdate": {
+            "type": "boolean",
+            "description": "鏄惁鍏佽鏇存柊"
+          },
+          "channel": {
+            "type": "string",
+            "description": "閫氶亾"
+          },
+          "modelGroup": {
+            "type": "string",
+            "description": "妯″瀷鍒嗙粍"
+          }
+        }
+      },
+      "VersionSaveRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "鐗堟湰鍙?
+          },
+          "channel": {
+            "type": "string",
+            "description": "鐗堟湰閫氶亾"
+          },
+          "title": {
+            "type": "string",
+            "description": "鐗堟湰鏍囬"
+          },
+          "releaseNotes": {
+            "type": "string",
+            "description": "鏇存柊璇存槑锛屼竴琛屼竴鏉?
+          },
+          "downloadUrl": {
+            "type": "string",
+            "description": "鏇存柊鍖呬笅杞藉湴鍧€"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "鏇存柊鍖匰HA256"
+          },
+          "forceUpdate": {
+            "type": "boolean",
+            "description": "鏄惁寮哄埗鏇存柊"
+          },
+          "published": {
+            "type": "boolean",
+            "description": "鏄惁鍙戝竷"
+          }
+        }
+      },
+      "ModelProviderSaveRequest": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "description": "妯″瀷渚涘簲鍟咺D"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "鏄剧ず鍚嶇О"
+          },
+          "apiType": {
+            "type": "string",
+            "description": "鎺ュ彛绫诲瀷锛屼緥濡?openai-completions"
+          },
+          "baseUrl": {
+            "type": "string",
+            "description": "妯″瀷鎺ュ彛 Base URL"
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "妯″瀷API Key銆備慨鏀规椂浼?******** 琛ㄧず涓嶄慨鏀瑰師Key"
+          },
+          "modelsJson": {
+            "type": "string",
+            "description": "妯″瀷鍒楄〃JSON瀛楃涓?
+          },
+          "defaultModel": {
+            "type": "string",
+            "description": "榛樿妯″瀷ID锛屼笉鍖呭惈provider鍓嶇紑"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "鏄惁鍚敤"
+          },
+          "channel": {
+            "type": "string",
+            "description": "閫傜敤閫氶亾"
+          },
+          "modelGroup": {
+            "type": "string",
+            "description": "閫傜敤妯″瀷鍒嗙粍"
+          },
+          "forceDefault": {
+            "type": "boolean",
+            "description": "鏄惁寮哄埗瀹㈡埛绔娇鐢ㄥ悗鍙伴粯璁ゆā鍨?
+          }
+        }
+      },
+      "LicenseRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "licenseKey": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "usbId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "allowUpdate": {
+            "type": "boolean"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "modelGroup": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DeviceRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "licenseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "usbId": {
+            "type": "string"
+          },
+          "machineId": {
+            "type": "string"
+          },
+          "hostname": {
+            "type": "string"
+          },
+          "osName": {
+            "type": "string"
+          },
+          "arch": {
+            "type": "string"
+          },
+          "driveFs": {
+            "type": "string"
+          },
+          "clientVersion": {
+            "type": "string"
+          },
+          "firstSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "launchCount": {
+            "type": "integer"
+          },
+          "lastIp": {
+            "type": "string"
+          }
+        }
+      },
+      "VersionRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "releaseNotes": {
+            "type": "string"
+          },
+          "downloadUrl": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "forceUpdate": {
+            "type": "boolean"
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ModelProviderRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "providerId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "apiType": {
+            "type": "string"
+          },
+          "baseUrl": {
+            "type": "string"
+          },
+          "apiKeyEncrypted": {
+            "type": "string",
+            "description": "鏁版嵁搴撲腑鍔犲瘑鍚庣殑Key锛屽悗鍙版帴鍙ｅ綋鍓嶄細杩斿洖璇ュ瓧娈碉紝姝ｅ紡鐗堝缓璁劚鏁?
+          },
+          "modelsJson": {
+            "type": "string"
+          },
+          "defaultModel": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "modelGroup": {
+            "type": "string"
+          },
+          "forceDefault": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ClientEventRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "licenseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deviceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "licenseKey": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "detailsJson": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LicenseCheckResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "allowUpdate": {
+                    "type": "boolean"
+                  },
+                  "channel": {
+                    "type": "string"
+                  },
+                  "modelGroup": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeviceRecordResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/DeviceRecord"
+              }
+            }
+          }
+        ]
+      },
+      "UpdateCheckResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "needUpdate": {
+                    "type": "boolean"
+                  },
+                  "latestVersion": {
+                    "type": "string"
+                  },
+                  "force": {
+                    "type": "boolean"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "downloadUrl": {
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "type": "string"
+                  },
+                  "releaseNotes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ModelConfigResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "revision": {
+                    "type": "integer"
+                  },
+                  "defaultModel": {
+                    "type": "string"
+                  },
+                  "forceDefault": {
+                    "type": "boolean"
+                  },
+                  "providers": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ClientEventRecordResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/ClientEventRecord"
+              }
+            }
+          }
+        ]
+      },
+      "SummaryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          }
+        ]
+      },
+      "LicenseListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LicenseRecord"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "LicenseRecordResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/LicenseRecord"
+              }
+            }
+          }
+        ]
+      },
+      "DeviceListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DeviceRecord"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "VersionListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/VersionRecord"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "VersionRecordResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/VersionRecord"
+              }
+            }
+          }
+        ]
+      },
+      "ModelProviderListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ModelProviderRecord"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ModelProviderRecordResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/ModelProviderRecord"
+              }
+            }
+          }
+        ]
+      },
+      "ClientEventListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ClientEventRecord"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "AdminLoginRequest": {
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "鍚庡彴鐢ㄦ埛鍚?
+          },
+          "password": {
+            "type": "string",
+            "description": "鍚庡彴瀵嗙爜"
+          }
+        }
+      },
+      "AdminLoginResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "tokenType": {
+                    "type": "string",
+                    "example": "Bearer"
+                  },
+                  "accessToken": {
+                    "type": "string",
+                    "description": "JWT璁块棶浠ょ墝"
+                  },
+                  "expiresIn": {
+                    "type": "integer",
+                    "description": "杩囨湡绉掓暟"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "鐢ㄦ埛鍚?
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+

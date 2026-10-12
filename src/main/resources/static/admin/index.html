@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>小龙虾后台</title>
+  <link rel="stylesheet" href="./style.css?v=2026072905">
+</head>
+<body>
+  <section id="loginPage" class="login-page">
+    <form id="loginForm" class="login-card" autocomplete="on">
+      <div class="login-logo">XLX</div>
+      <h1>小龙虾后台</h1>
+      <p>请输入管理员账号密码进入管理后台</p>
+
+      <label>
+        <span>用户名</span>
+        <input id="username" name="username" type="text" placeholder="请输入用户名" autocomplete="username" required>
+      </label>
+
+      <label>
+        <span>密码</span>
+        <input id="password" name="password" type="password" placeholder="请输入密码" autocomplete="current-password" required>
+      </label>
+
+      <div id="loginError" class="login-error hidden" role="alert"></div>
+      <button id="login" type="submit">登录</button>
+    </form>
+  </section>
+
+  <div id="adminApp" class="admin-app hidden">
+    <aside>
+      <h1>小龙虾后台</h1>
+      <button data-tab="dashboard" class="active" type="button">首页</button>
+      <button data-tab="licenses" type="button">授权</button>
+      <button data-tab="devices" type="button">设备</button>
+      <button data-tab="versions" type="button">版本</button>
+      <button data-tab="models" type="button">模型</button>
+      <button data-tab="events" type="button">日志</button>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div class="topbar-title">
+          <strong id="pageTitle">首页</strong>
+          <span>管理控制台</span>
+        </div>
+        <div class="user-box">
+          <span id="loginStatus"></span>
+          <button id="refresh" type="button">刷新</button>
+          <button id="logout" class="secondary" type="button">退出登录</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="panel active">
+        <h2>首页</h2>
+        <div id="summary" class="metrics"></div>
+      </section>
+
+      <section id="licenses" class="panel">
+        <div class="section-head">
+          <h2>授权管理</h2>
+          <button id="createLicense" type="button">新增授权</button>
+        </div>
+        <div class="section-search license-search">
+          <input id="licenseKeySearch" type="text" placeholder="授权码">
+          <input id="customerNameSearch" type="text" placeholder="客户">
+          <select id="statusSearch">
+            <option value="">全部状态</option>
+            <option value="active">active</option>
+            <option value="disabled">disabled</option>
+            <option value="expired">expired</option>
+          </select>
+          <input id="usbIdSearch" type="text" placeholder="U盘ID">
+          <button id="licenseSearchBtn" type="button">查询</button>
+        </div>
+        <table id="licenseTable"></table>
+        <div id="licensePager" class="pager"></div>
+      </section>
+
+      <section id="devices" class="panel">
+        <h2>设备记录</h2>
+        <div class="section-search license-search device-search">
+          <input id="deviceLicenseKeySearch" type="text" placeholder="授权码">
+          <input id="deviceHostnameSearch" type="text" placeholder="机器名称">
+          <input id="deviceUsbIdSearch" type="text" placeholder="U盘ID">
+          <input id="deviceIpSearch" type="text" placeholder="IP地址">
+          <button id="deviceSearchBtn" type="button">查询</button>
+        </div>
+        <table id="deviceTable"></table>
+        <div id="devicePager" class="pager"></div>
+      </section>
+
+      <section id="versions" class="panel">
+        <div class="section-head">
+          <h2>版本管理</h2>
+          <button id="createVersion" type="button">新增版本</button>
+        </div>
+        <div class="section-search license-search version-search">
+          <input id="versionKeywordSearch" type="text" placeholder="关键词：版本/标题/更新内容">
+          <select id="versionPlatformSearch">
+            <option value="">全部平台</option>
+            <option value="windows">Windows</option>
+            <option value="macos">macOS</option>
+          </select>
+          <select id="versionArchSearch">
+            <option value="">全部架构</option>
+            <option value="x64">x64</option>
+            <option value="arm64">arm64</option>
+          </select>
+          <select id="versionPublishedSearch">
+            <option value="">全部状态</option>
+            <option value="true">已发布</option>
+            <option value="false">草稿</option>
+          </select>
+          <button id="versionSearchBtn" type="button">查询</button>
+        </div>
+        <table id="versionTable"></table>
+        <div id="versionPager" class="pager"></div>
+      </section>
+
+      <section id="models" class="panel">
+        <div class="section-head">
+          <h2>模型管理</h2>
+          <button id="createModel" type="button">新增模型</button>
+        </div>
+        <table id="modelTable"></table>
+      </section>
+
+      <section id="events" class="panel">
+        <h2>事件日志</h2>
+        <table id="eventTable"></table>
+        <div id="eventPager" class="pager"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js?v=2026080501"></script>
+</body>
+</html>

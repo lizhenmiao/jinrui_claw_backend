@@ -1,0 +1,37 @@
+server:
+  port: 15000
+
+spring:
+  application:
+    name: xlx-admin-java
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/xlx_admin?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:123456}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    out-of-order: true
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+
+xlx:
+  crypto-secret: ${XLX_CRYPTO_SECRET:change-me-32-byte-secret-for-dev}
+  jwt-secret: ${XLX_JWT_SECRET:change-me-jwt-secret-for-dev}
+  jwt-ttl-seconds: ${XLX_JWT_TTL_SECONDS:86400}
+  admin-username: ${XLX_ADMIN_USERNAME:jinrui}
+  admin-password: ${XLX_ADMIN_PASSWORD:80W24da4C22X}
+  upload-dir: ${XLX_UPLOAD_DIR:data/uploads/versions}
+  public-base-url: ${XLX_PUBLIC_BASE_URL:}

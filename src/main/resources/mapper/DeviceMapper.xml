@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jinrui.xlxadmin.mapper.DeviceMapper">
+
+  <select id="selectGroupedDevices" resultType="java.util.Map">
+    select devices_view.*
+    from (
+    <![CDATA[
+    select
+      dg.licenseId as licenseId,
+      dg.licenseKey as licenseKey,
+      dg.hostname as hostname,
+      dg.usbId as usbId,
+      dg.machineId as machineId,
+      dg.osName as osName,
+      dg.arch as arch,
+      dg.driveFs as driveFs,
+      dg.clientVersion as clientVersion,
+      dg.firstSeenAt as firstSeenAt,
+      case
+        when gw.lastGatewayAt is not null and (dg.deviceLastSeenAt is null or gw.lastGatewayAt > dg.deviceLastSeenAt)
+          then gw.lastGatewayAt
+        else dg.deviceLastSeenAt
+      end as lastSeenAt,
+      dg.launchCount as launchCount,
+      dg.lastIp as lastIp,
+      dg.rawCount as rawCount,
+      coalesce(gw.gatewayStartCount, 0) as gatewayStartCount,
+      coalesce(gw.gatewaySuccessCount, 0) as gatewaySuccessCount,
+      coalesce(gw.gatewayFailedCount, 0) as gatewayFailedCount,
+      gw.lastGatewayAt as lastGatewayAt,
+      gw.lastGatewayEventType as lastGatewayEventType,
+      gw.lastGatewayMessage as lastGatewayMessage
+    from (
+      select
+        d.license_id as licenseId,
+        max(l.license_key) as licenseKey,
+        d.hostname as hostname,
+        d.usb_id as usbId,
+        substring_index(group_concat(d.machine_id order by d.last_seen_at desc separator '|||'), '|||', 1) as machineId,
+        substring_index(group_concat(d.os_name order by d.last_seen_at desc separator '|||'), '|||', 1) as osName,
+        substring_index(group_concat(d.arch order by d.last_seen_at desc separator '|||'), '|||', 1) as arch,
+        substring_index(group_concat(d.drive_fs order by d.last_seen_at desc separator '|||'), '|||', 1) as driveFs,
+        substring_index(group_concat(d.client_version order by d.last_seen_at desc separator '|||'), '|||', 1) as clientVersion,
+        min(d.first_seen_at) as firstSeenAt,
+        max(d.last_seen_at) as deviceLastSeenAt,
+        coalesce(sum(d.launch_count), 0) as launchCount,
+        substring_index(group_concat(d.last_ip order by d.last_seen_at desc separator '|||'), '|||', 1) as lastIp,
+        count(*) as rawCount
+      from devices d
+      left join licenses l on l.id = d.license_id
+      group by d.license_id, d.usb_id, d.hostname
+    ) dg
+    left join (
+      select
+        license_id as licenseId,
+        license_key as licenseKey,
+        nullif(nullif(json_unquote(json_extract(details_json, '$.usbId')), 'null'), '') as usbId,
+        nullif(nullif(json_unquote(json_extract(details_json, '$.hostname')), 'null'), '') as hostname,
+        count(*) as gatewayStartCount,
+        sum(case when event_type = 'gateway_start_success' then 1 else 0 end) as gatewaySuccessCount,
+        sum(case when event_type = 'gateway_start_failed' then 1 else 0 end) as gatewayFailedCount,
+        max(created_at) as lastGatewayAt,
+        substring_index(group_concat(event_type order by created_at desc separator '|||'), '|||', 1) as lastGatewayEventType,
+        substring_index(group_concat(message order by created_at desc separator '|||'), '|||', 1) as lastGatewayMessage
+      from client_event
+      where event_type in ('gateway_start_success', 'gateway_start_failed')
+      group by
+        license_id,
+        license_key,
+        nullif(nullif(json_unquote(json_extract(details_json, '$.usbId')), 'null'), ''),
+        nullif(nullif(json_unquote(json_extract(details_json, '$.hostname')), 'null'), '')
+    ) gw on
+      (
+        gw.licenseId = dg.licenseId
+        or (gw.licenseId is null and gw.licenseKey = dg.licenseKey)
+      )
+      and (gw.usbId = dg.usbId or (gw.usbId is null and dg.usbId is null))
+      and (gw.hostname = dg.hostname or (gw.hostname is null and dg.hostname is null))
+    union all
+    select
+      gw.licenseId as licenseId,
+      gw.licenseKey as licenseKey,
+      gw.hostname as hostname,
+      gw.usbId as usbId,
+      gw.machineId as machineId,
+      gw.osName as osName,
+      gw.arch as arch,
+      gw.driveFs as driveFs,
+      gw.clientVersion as clientVersion,
+      gw.lastGatewayAt as firstSeenAt,
+      gw.lastGatewayAt as lastSeenAt,
+      gw.gatewayStartCount as launchCount,
+      coalesce(gw.lastIp, (
+        select d.last_ip
+        from devices d
+        left join licenses l on l.id = d.license_id
+        where
+          (
+            gw.licenseId = d.license_id
+            or (gw.licenseId is null and gw.licenseKey = l.license_key)
+          )
+          and (gw.hostname = d.hostname or (gw.hostname is null and d.hostname is null))
+          and d.last_ip is not null
+          and d.last_ip <> ''
+        order by d.last_seen_at desc
+        limit 1
+      ), '') as lastIp,
+      0 as rawCount,
+      gw.gatewayStartCount as gatewayStartCount,
+      gw.gatewaySuccessCount as gatewaySuccessCount,
+      gw.gatewayFailedCount as gatewayFailedCount,
+      gw.lastGatewayAt as lastGatewayAt,
+      gw.lastGatewayEventType as lastGatewayEventType,
+      gw.lastGatewayMessage as lastGatewayMessage
+    from (
+      select
+        license_id as licenseId,
+        license_key as licenseKey,
+        nullif(nullif(json_unquote(json_extract(details_json, '$.usbId')), 'null'), '') as usbId,
+        nullif(nullif(json_unquote(json_extract(details_json, '$.hostname')), 'null'), '') as hostname,
+        substring_index(group_concat(nullif(nullif(json_unquote(json_extract(details_json, '$.machineId')), 'null'), '') order by created_at desc separator '|||'), '|||', 1) as machineId,
+        substring_index(group_concat(nullif(nullif(json_unquote(json_extract(details_json, '$.os')), 'null'), '') order by created_at desc separator '|||'), '|||', 1) as osName,
+        substring_index(group_concat(nullif(nullif(json_unquote(json_extract(details_json, '$.arch')), 'null'), '') order by created_at desc separator '|||'), '|||', 1) as arch,
+        substring_index(group_concat(nullif(nullif(json_unquote(json_extract(details_json, '$.driveFs')), 'null'), '') order by created_at desc separator '|||'), '|||', 1) as driveFs,
+        substring_index(group_concat(nullif(nullif(json_unquote(json_extract(details_json, '$.clientVersion')), 'null'), '') order by created_at desc separator '|||'), '|||', 1) as clientVersion,
+        substring_index(group_concat(coalesce(
+          nullif(nullif(json_unquote(json_extract(details_json, '$.ip')), 'null'), ''),
+          nullif(nullif(json_unquote(json_extract(details_json, '$.clientIp')), 'null'), '')
+        ) order by created_at desc separator '|||'), '|||', 1) as lastIp,
+        count(*) as gatewayStartCount,
+        sum(case when event_type = 'gateway_start_success' then 1 else 0 end) as gatewaySuccessCount,
+        sum(case when event_type = 'gateway_start_failed' then 1 else 0 end) as gatewayFailedCount,
+        max(created_at) as lastGatewayAt,
+        substring_index(group_concat(event_type order by created_at desc separator '|||'), '|||', 1) as lastGatewayEventType,
+        substring_index(group_concat(message order by created_at desc separator '|||'), '|||', 1) as lastGatewayMessage
+      from client_event
+      where event_type in ('gateway_start_success', 'gateway_start_failed')
+      group by
+        license_id,
+        license_key,
+        nullif(nullif(json_unquote(json_extract(details_json, '$.usbId')), 'null'), ''),
+        nullif(nullif(json_unquote(json_extract(details_json, '$.hostname')), 'null'), '')
+    ) gw
+    where not exists (
+      select 1
+      from devices d
+      left join licenses l on l.id = d.license_id
+      where
+        (
+          gw.licenseId = d.license_id
+          or (gw.licenseId is null and gw.licenseKey = l.license_key)
+        )
+        and (gw.usbId = d.usb_id or (gw.usbId is null and d.usb_id is null))
+        and (gw.hostname = d.hostname or (gw.hostname is null and d.hostname is null))
+    )
+    ]]>
+    ) devices_view
+    <where>
+      <if test="licenseKey != null and licenseKey != ''">
+        and devices_view.licenseKey like concat('%', #{licenseKey}, '%')
+      </if>
+      <if test="hostname != null and hostname != ''">
+        and devices_view.hostname like concat('%', #{hostname}, '%')
+      </if>
+      <if test="usbId != null and usbId != ''">
+        and devices_view.usbId like concat('%', #{usbId}, '%')
+      </if>
+      <if test="lastIp != null and lastIp != ''">
+        and devices_view.lastIp like concat('%', #{lastIp}, '%')
+      </if>
+    </where>
+    order by devices_view.lastSeenAt desc
+  </select>
+
+</mapper>
