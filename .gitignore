@@ -51,4 +51,11 @@ application-local.yml
 application-local.yaml
 application-local.properties
 
+# H2 本地数据库运行文件
+data/
+
+# 接口调试临时 payload
+/.login-body.json
+/.license-body.json
+
 /*.tar

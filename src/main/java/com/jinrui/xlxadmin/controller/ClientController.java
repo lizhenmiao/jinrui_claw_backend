@@ -12,11 +12,21 @@ import com.jinrui.xlxadmin.service.EventService;
 import com.jinrui.xlxadmin.service.LicenseService;
 import com.jinrui.xlxadmin.service.ModelConfigService;
 import com.jinrui.xlxadmin.service.VersionService;
+import com.jinrui.xlxadmin.service.impl.VersionFileStore;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.nio.file.Path;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -30,15 +40,17 @@ public class ClientController {
   private final VersionService versionService;
   private final ModelConfigService modelConfigService;
   private final EventService eventService;
+  private final VersionFileStore versionFileStore;
 
   public ClientController(LicenseService licenseService, DeviceService deviceService,
                           VersionService versionService, ModelConfigService modelConfigService,
-                          EventService eventService) {
+                          EventService eventService, VersionFileStore versionFileStore) {
     this.licenseService = licenseService;
     this.deviceService = deviceService;
     this.versionService = versionService;
     this.modelConfigService = modelConfigService;
     this.eventService = eventService;
+    this.versionFileStore = versionFileStore;
   }
 
   /**
@@ -59,11 +71,32 @@ public class ClientController {
   }
 
   /**
-   * 检查更新 —— 根据授权通道返回最新版本和下载信息。
+   * 检查更新 —— 根据授权通道返回最新版本和下载信息；命中新版本时附带差量更新所需的
+   * manifest 原文和按文件下载基础 URL（fileUrlBase）。
    */
   @PostMapping("/update/check")
-  public ApiResponse<?> checkUpdate(@Valid @RequestBody UpdateCheckRequest req) {
-    return ApiResponse.ok(versionService.checkUpdate(req));
+  public ApiResponse<?> checkUpdate(@Valid @RequestBody UpdateCheckRequest req, HttpServletRequest http) {
+    return ApiResponse.ok(versionService.checkUpdate(req, http));
+  }
+
+  /**
+   * 差量更新按文件下载 —— 客户端拼 ?version=&path= 拉取单个变更文件，免鉴权直链。
+   * platform/arch 由后台编进 fileUrlBase 路径段，避免同版本号跨平台互相覆盖。
+   * path 已由 Spring 完成 URL 解码；含 ".." 或绝对路径时拒绝（400），文件不存在返回 404。
+   */
+  @GetMapping("/versions/file/{platform}/{arch}")
+  public ResponseEntity<Resource> downloadVersionFile(@PathVariable("platform") String platform,
+                                                      @PathVariable("arch") String arch,
+                                                      @RequestParam("version") String version,
+                                                      @RequestParam("path") String path) {
+    Path file = versionFileStore.resolveFile(platform, arch, version, path);
+    if (file == null) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFileName() + "\"")
+        .body(new FileSystemResource(file));
   }
 
   /**

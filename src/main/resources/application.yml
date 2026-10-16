@@ -34,4 +34,6 @@ xlx:
   admin-username: ${XLX_ADMIN_USERNAME:jinrui}
   admin-password: ${XLX_ADMIN_PASSWORD:80W24da4C22X}
   upload-dir: ${XLX_UPLOAD_DIR:data/uploads/versions}
+  version-files-dir: ${XLX_VERSION_FILES_DIR:data/uploads/version-files}
+  delta-enabled-platforms: ${XLX_DELTA_PLATFORMS:windows}
   public-base-url: ${XLX_PUBLIC_BASE_URL:}

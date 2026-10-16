@@ -534,13 +534,13 @@ async function uploadVersionPackage() {
   try {
     const formData = new FormData();
     formData.append("file", file);
-    const data = await api("/api/admin/versions/upload", {
-      method: "POST",
-      body: formData
+    const data = await uploadWithProgress("/api/admin/versions/upload", formData, (loaded, total) => {
+      const percent = total ? Math.floor(loaded * 100 / total) : 0;
+      status.textContent = `${file.name} 上传中：${formatBytes(loaded)} / ${formatBytes(total)}（${percent}%）`;
     });
     $("versionDownloadUrl").value = data.downloadUrl || "";
     $("versionSha256").value = data.sha256 || "";
-    status.textContent = `已上传：${data.fileName || file.name}`;
+    status.textContent = `已上传：${data.fileName || file.name}（${formatBytes(data.size || file.size)}，SHA256 已自动回填）`;
   } catch (error) {
     if (error.authExpired) return;
     status.textContent = "上传失败";
@@ -550,6 +550,59 @@ async function uploadVersionPackage() {
     button.textContent = oldText;
     $("versionUploadFile").value = "";
   }
+}
+
+// 带上传进度的 POST（fetch 不支持上传进度回调，这里用 XMLHttpRequest 实现）
+function uploadWithProgress(path, formData, onProgress) {
+  return new Promise((resolve, reject) => {
+    if (!state.token) {
+      reject(new Error("请先登录后台"));
+      return;
+    }
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", path);
+    xhr.setRequestHeader("Authorization", `Bearer ${state.token}`);
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) onProgress(event.loaded, event.total);
+    });
+    xhr.addEventListener("load", () => {
+      let json;
+      try {
+        json = JSON.parse(xhr.responseText);
+      } catch {
+        reject(new Error("服务器响应异常"));
+        return;
+      }
+      if (!json.ok) {
+        const message = json.message || json.code || "请求失败";
+        if (isAuthExpiredMessage(message)) {
+          expireLogin();
+          const error = new Error("登录已过期，请重新登录");
+          error.authExpired = true;
+          reject(error);
+          return;
+        }
+        reject(new Error(message));
+        return;
+      }
+      resolve(json.data);
+    });
+    xhr.addEventListener("error", () => reject(new Error("网络异常，上传失败")));
+    xhr.addEventListener("abort", () => reject(new Error("上传已取消")));
+    xhr.send(formData);
+  });
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(1)} ${units[unit]}`;
 }
 
 async function saveVersionFromDialog(event) {

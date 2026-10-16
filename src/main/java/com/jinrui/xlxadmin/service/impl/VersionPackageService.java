@@ -9,6 +9,7 @@ import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -22,11 +23,14 @@ public class VersionPackageService {
 
   private final Path uploadDir;
   private final String publicBaseUrl;
+  private final VersionFileStore versionFileStore;
 
   public VersionPackageService(@Value("${xlx.upload-dir:data/uploads/versions}") String uploadDir,
-                               @Value("${xlx.public-base-url:}") String publicBaseUrl) {
+                               @Value("${xlx.public-base-url:}") String publicBaseUrl,
+                               VersionFileStore versionFileStore) {
     this.uploadDir = Path.of(uploadDir).toAbsolutePath().normalize();
     this.publicBaseUrl = publicBaseUrl == null ? "" : publicBaseUrl.trim();
+    this.versionFileStore = versionFileStore;
   }
 
   public Map<String, Object> upload(MultipartFile file, HttpServletRequest request) {
@@ -34,8 +38,8 @@ public class VersionPackageService {
       throw new IllegalArgumentException("请选择要上传的更新包");
     }
     String originalName = sanitize(file.getOriginalFilename());
-    if (!originalName.toLowerCase(Locale.ROOT).endsWith(".zip") && !originalName.toLowerCase(Locale.ROOT).endsWith(".rar")) {
-      throw new IllegalArgumentException("目前只允许上传 .zip 或 .rar 更新包");
+    if (!originalName.toLowerCase(Locale.ROOT).endsWith(".zip")) {
+      throw new IllegalArgumentException("目前只允许上传 .zip 更新包");
     }
 
     try {
@@ -60,13 +64,20 @@ public class VersionPackageService {
 
       String sha256 = HexFormat.of().formatHex(digest.digest());
       String downloadUrl = buildDownloadUrl(request, storedName);
-      return Map.of(
-          "originalName", originalName,
-          "fileName", storedName,
-          "size", size,
-          "sha256", sha256,
-          "downloadUrl", downloadUrl
-      );
+
+      // 差量更新支持：zip 内含 manifest.json 时解包暂存（建版本记录时才绑定 platform/arch）；
+      // 没有 manifest 则仅支持全量更新
+      VersionFileStore.ExtractResult extracted = versionFileStore.extractAndStore(target, storedName);
+
+      Map<String, Object> result = new LinkedHashMap<>();
+      result.put("originalName", originalName);
+      result.put("fileName", storedName);
+      result.put("size", size);
+      result.put("sha256", sha256);
+      result.put("downloadUrl", downloadUrl);
+      result.put("manifestVersion", extracted == null ? null : extracted.version());
+      result.put("manifestFileCount", extracted == null ? 0 : extracted.fileCount());
+      return result;
     } catch (IllegalArgumentException e) {
       throw e;
     } catch (Exception e) {
@@ -82,8 +93,26 @@ public class VersionPackageService {
   }
 
   private String buildDownloadUrl(HttpServletRequest request, String storedName) {
-    String base = publicBaseUrl.isBlank() ? requestBaseUrl(request) : publicBaseUrl;
-    return trimRightSlash(base) + "/uploads/versions/" + storedName;
+    return trimRightSlash(baseUrl(request)) + "/uploads/versions/" + storedName;
+  }
+
+  /**
+   * 差量更新“按文件下载”接口的基础 URL（不带 query 参数，客户端自行拼接 ?version=&path=）。
+   * platform/arch 编进路径段：客户端只会在 fileUrlBase 后追加 query，对路径变化透明，
+   * 同时避免同版本号跨平台复用时的静默覆盖。
+   */
+  public String buildFileUrlBase(HttpServletRequest request, String platform, String arch) {
+    return trimRightSlash(baseUrl(request)) + "/api/client/versions/file/"
+        + urlSegment(platform) + "/" + urlSegment(arch);
+  }
+
+  private static String urlSegment(String value) {
+    String cleaned = value == null ? "" : value.trim().replaceAll("[^A-Za-z0-9._-]", "-");
+    return cleaned.isBlank() ? "unknown" : cleaned.toLowerCase(Locale.ROOT);
+  }
+
+  private String baseUrl(HttpServletRequest request) {
+    return publicBaseUrl.isBlank() ? requestBaseUrl(request) : publicBaseUrl;
   }
 
   private String requestBaseUrl(HttpServletRequest request) {
