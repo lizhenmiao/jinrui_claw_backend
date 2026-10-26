@@ -23,7 +23,14 @@ const state = {
   versionKeywordSearch: "",
   versionPlatformSearch: "",
   versionArchSearch: "",
-  versionPublishedSearch: ""
+  versionPublishedSearch: "",
+  reports: [],
+  reportPage: null,
+  reportPageSize: 20,
+  reportKeywordSearch: "",
+  reportSceneSearch: "",
+  reportStatusSearch: "",
+  reportLicenseKeySearch: ""
 };
 
 const tabTitles = {
@@ -32,7 +39,8 @@ const tabTitles = {
   devices: "设备",
   versions: "版本",
   models: "模型",
-  events: "日志"
+  events: "日志",
+  reports: "反馈"
 };
 
 init();
@@ -42,6 +50,7 @@ function init() {
   initLicenseDialog();
   initVersionDialog();
   initModelDialog();
+  initReportDialog();
 
   document.querySelectorAll("aside button").forEach((btn) => {
     btn.addEventListener("click", () => setTab(btn.dataset.tab));
@@ -93,6 +102,22 @@ function init() {
   });
   ["versionPlatformSearch", "versionArchSearch", "versionPublishedSearch"].forEach((id) => {
     $(id).addEventListener("change", () => $("versionSearchBtn").click());
+  });
+
+  $("reportSearchBtn").addEventListener("click", () => {
+    state.reportKeywordSearch = $("reportKeywordSearch").value.trim();
+    state.reportSceneSearch = $("reportSceneSearch").value;
+    state.reportStatusSearch = $("reportStatusSearch").value;
+    state.reportLicenseKeySearch = $("reportLicenseKeySearch").value.trim();
+    loadReports(1);
+  });
+  ["reportKeywordSearch", "reportLicenseKeySearch"].forEach((id) => {
+    $(id).addEventListener("keydown", (e) => {
+      if (e.key === "Enter") $("reportSearchBtn").click();
+    });
+  });
+  ["reportSceneSearch", "reportStatusSearch"].forEach((id) => {
+    $(id).addEventListener("change", () => $("reportSearchBtn").click());
   });
 
   refreshLoginState();
@@ -272,6 +297,7 @@ async function load() {
     if (state.tab === "versions") await loadVersions();
     if (state.tab === "models") await loadModels();
     if (state.tab === "events") await loadEvents();
+    if (state.tab === "reports") await loadReports();
   } catch (error) {
     if (error.authExpired) return;
     alert(error.message);
@@ -418,6 +444,209 @@ async function loadEvents(page) {
     `<pre>${escapeHtml(item.detailsJson || "")}</pre>`
   ]));
   renderPagination("eventPager", pageData, (p) => loadEvents(p));
+}
+
+async function loadReports(page) {
+  $("reportKeywordSearch").value = state.reportKeywordSearch;
+  $("reportSceneSearch").value = state.reportSceneSearch;
+  $("reportStatusSearch").value = state.reportStatusSearch;
+  $("reportLicenseKeySearch").value = state.reportLicenseKeySearch;
+  page = page || (state.reportPage ? state.reportPage.current : 1);
+  const params = new URLSearchParams({ page, pageSize: state.reportPageSize });
+  if (state.reportKeywordSearch) params.set("keyword", state.reportKeywordSearch);
+  if (state.reportSceneSearch) params.set("scene", state.reportSceneSearch);
+  if (state.reportStatusSearch) params.set("status", state.reportStatusSearch);
+  if (state.reportLicenseKeySearch) params.set("licenseKey", state.reportLicenseKeySearch);
+  const data = await api(`/api/admin/reports?${params}`);
+  const pageData = normalizePageData(data);
+  state.reportPage = pageData;
+  state.reports = pageData.records;
+  renderTable("reportTable", ["提交时间", "场景", "状态", "回执码", "版本", "授权码", "机器", "错误摘要", "操作"], pageData.records.map((item) => [
+    fmt(item.createdAt),
+    reportSceneLabel(item.scene),
+    reportStatusLabel(item.status),
+    code(item.reportNo || ""),
+    escapeHtml(item.clientVersion || ""),
+    code(item.licenseKey || "") || "<span class='muted'>未上报</span>",
+    `${escapeHtml(item.hostname || item.machineId || "")}<br><span class="muted">${escapeHtml(item.osName || "")}</span>`,
+    `<div class="notes-cell">${escapeHtml(item.errorSummary || item.remark || "")}</div>`,
+    `<div class="row-actions">
+      <button class="small secondary" type="button" onclick="openReportDialog(${item.id})">详情</button>
+      <button class="small" type="button" onclick="downloadReportPackage(${item.id})">下载日志</button>
+    </div>`
+  ]));
+  renderPagination("reportPager", pageData, (p) => loadReports(p));
+}
+
+function initReportDialog() {
+  const dialog = document.createElement("div");
+  dialog.id = "reportDialog";
+  dialog.className = "modal hidden";
+  dialog.innerHTML = `
+    <div class="modal-mask" data-close-report-dialog></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3>反馈详情</h3>
+          <p>客户端上报的诊断信息，改完状态和备注记得保存。日志包只能通过后台鉴权下载。</p>
+        </div>
+        <button class="icon-btn" type="button" data-close-report-dialog>×</button>
+      </div>
+      <form id="reportForm" class="model-form">
+        <input id="reportId" type="hidden">
+        <label>回执码<input id="reportNoInput" readonly></label>
+        <label>提交时间<input id="reportCreatedInput" readonly></label>
+        <label>场景<input id="reportSceneInput" readonly></label>
+        <label>错误码<input id="reportErrorCodeInput" readonly></label>
+        <label>客户端版本<input id="reportVersionInput" readonly></label>
+        <label>授权码<input id="reportLicenseInput" readonly></label>
+        <label>机器名<input id="reportHostInput" readonly></label>
+        <label>系统 / 架构<input id="reportOsInput" readonly></label>
+        <label>联系方式<input id="reportContactInput" readonly></label>
+        <label>来源 IP<input id="reportIpInput" readonly></label>
+        <label class="span-2">错误摘要<input id="reportSummaryInput" readonly></label>
+        <label class="span-2">用户描述<input id="reportRemarkInput" readonly></label>
+        <label>日志包<input id="reportFileInput" readonly></label>
+        <label>SHA256<input id="reportShaInput" readonly></label>
+        <label>处理状态
+          <select id="reportStatusEdit">
+            <option value="submitted">待处理</option>
+            <option value="triaged">已受理</option>
+            <option value="resolved">已解决</option>
+            <option value="ignored">已忽略</option>
+          </select>
+        </label>
+        <label>最近更新<input id="reportUpdatedInput" readonly></label>
+        <label class="span-2">客服备注
+          <textarea id="reportAdminNote" rows="4" placeholder="例如：已复现，用户环境缺 VC++ 运行库，已远程处理"></textarea>
+        </label>
+        <div class="modal-actions span-2">
+          <button class="secondary" type="button" data-close-report-dialog>取消</button>
+          <button class="secondary" type="button" id="reportDownloadButton">下载日志包</button>
+          <button type="submit">保存处理结果</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(dialog);
+  dialog.querySelectorAll("[data-close-report-dialog]").forEach((item) => {
+    item.addEventListener("click", closeReportDialog);
+  });
+  $("reportForm").addEventListener("submit", saveReportFromDialog);
+  $("reportDownloadButton").addEventListener("click", () => downloadReportPackage($("reportId").value));
+}
+
+// 详情接口返回完整字段（含 adminNote），列表数据可能被截断，所以打开时重新拉一次
+async function openReportDialog(id) {
+  let item;
+  try {
+    item = await api(`/api/admin/reports/${id}`);
+  } catch (error) {
+    if (error.authExpired) return;
+    alert(error.message);
+    return;
+  }
+  if (!item) return;
+  $("reportId").value = item.id;
+  $("reportNoInput").value = item.reportNo || "";
+  $("reportCreatedInput").value = fmt(item.createdAt);
+  $("reportSceneInput").value = reportSceneText(item.scene);
+  $("reportErrorCodeInput").value = item.errorCode || "";
+  $("reportVersionInput").value = item.clientVersion || "";
+  $("reportLicenseInput").value = item.licenseKey || "";
+  $("reportHostInput").value = item.hostname || item.machineId || "";
+  $("reportOsInput").value = [item.osName, item.arch].filter(Boolean).join(" / ");
+  $("reportContactInput").value = item.contact || "";
+  $("reportIpInput").value = item.sourceIp || "";
+  $("reportSummaryInput").value = item.errorSummary || "";
+  $("reportRemarkInput").value = item.remark || "";
+  $("reportFileInput").value = item.filePath ? `${item.filePath}（${formatBytes(item.fileSize || 0)}）` : "未保存";
+  $("reportShaInput").value = item.fileSha256 || "";
+  $("reportUpdatedInput").value = fmt(item.updatedAt);
+  $("reportStatusEdit").value = item.status || "submitted";
+  $("reportAdminNote").value = item.adminNote || "";
+  $("reportDialog").classList.remove("hidden");
+  $("reportStatusEdit").focus();
+}
+
+function closeReportDialog() {
+  $("reportDialog").classList.add("hidden");
+}
+
+async function saveReportFromDialog(event) {
+  event.preventDefault();
+  const id = $("reportId").value;
+  if (!id) return;
+  await api(`/api/admin/reports/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      status: $("reportStatusEdit").value,
+      adminNote: $("reportAdminNote").value.trim()
+    })
+  });
+  closeReportDialog();
+  await loadReports();
+}
+
+// 下载接口要带 Authorization 头，不能直接 window.open，用 fetch 拿 blob 再触发保存
+async function downloadReportPackage(id) {
+  if (!state.token) return;
+  const item = (state.reports || []).find((row) => String(row.id) === String(id));
+  const fileName = `${item && item.reportNo ? item.reportNo : "report-" + id}.zip`;
+  try {
+    const res = await fetch(`/api/admin/reports/${id}/download`, {
+      headers: { Authorization: `Bearer ${state.token}` }
+    });
+    const contentType = res.headers.get("content-type") || "";
+    if (!res.ok || contentType.includes("application/json")) {
+      let message = "下载失败，日志包可能已被清理";
+      try {
+        const json = await res.json();
+        message = json.message || json.code || message;
+      } catch {
+        // 非 JSON 错误体（如文件缺失返回的空 404），保留默认提示
+      }
+      if (isAuthExpiredMessage(message)) expireLogin();
+      alert(message);
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    alert(error.message || "下载失败");
+  }
+}
+
+function reportSceneText(value) {
+  return {
+    reset_failed: "重置失败",
+    repair_failed: "启动修复失败",
+    startup_failed: "启动失败",
+    update_failed: "更新失败",
+    manual: "用户主动提交",
+    other: "其他"
+  }[value] || value || "";
+}
+
+function reportSceneLabel(value) {
+  const text = escapeHtml(reportSceneText(value));
+  return value === "manual" || !value ? `<span class="muted">${text}</span>` : text;
+}
+
+function reportStatusLabel(value) {
+  return {
+    submitted: '<span class="tag server">待处理</span>',
+    triaged: '<span class="tag client">已受理</span>',
+    resolved: '<span class="ok">已解决</span>',
+    ignored: '<span class="muted">已忽略</span>'
+  }[value] || escapeHtml(value || "");
 }
 
 function initVersionDialog() {
@@ -971,6 +1200,9 @@ function label(key) {
     versions: "版本数",
     models: "模型数",
     events: "事件数",
+    reports: "反馈数",
+    reports24h: "24小时反馈",
+    reportsPending: "待处理反馈",
     errors24h: "24小时错误",
     gatewayStartsToday: "今日网关启动",
     gatewaySuccessToday: "今日网关成功",
@@ -1105,3 +1337,5 @@ window.toggleVersionPublished = toggleVersionPublished;
 window.deleteVersion = deleteVersion;
 window.openModelDialog = openModelDialog;
 window.deleteModel = deleteModel;
+window.openReportDialog = openReportDialog;
+window.downloadReportPackage = downloadReportPackage;

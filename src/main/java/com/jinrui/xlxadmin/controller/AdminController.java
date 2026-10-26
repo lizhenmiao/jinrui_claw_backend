@@ -4,24 +4,33 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jinrui.xlxadmin.dto.AdminDtos.LicenseSaveRequest;
 import com.jinrui.xlxadmin.dto.AdminDtos.ModelProviderSaveRequest;
+import com.jinrui.xlxadmin.dto.AdminDtos.SupportReportUpdateRequest;
 import com.jinrui.xlxadmin.dto.AdminDtos.VersionSaveRequest;
 import com.jinrui.xlxadmin.dto.ApiResponse;
 import com.jinrui.xlxadmin.entity.ClientEvent;
 import com.jinrui.xlxadmin.entity.LicenseRecord;
 import com.jinrui.xlxadmin.entity.ModelProvider;
+import com.jinrui.xlxadmin.entity.SupportReport;
 import com.jinrui.xlxadmin.entity.VersionInfo;
 import com.jinrui.xlxadmin.service.DeviceService;
 import com.jinrui.xlxadmin.service.EventService;
 import com.jinrui.xlxadmin.service.LicenseService;
 import com.jinrui.xlxadmin.service.ModelConfigService;
+import com.jinrui.xlxadmin.service.SupportReportService;
 import com.jinrui.xlxadmin.service.VersionService;
 import com.jinrui.xlxadmin.service.impl.VersionPackageService;
 import com.jinrui.xlxadmin.util.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -49,12 +58,14 @@ public class AdminController {
   private final VersionPackageService versionPackageService;
   private final ModelConfigService modelConfigService;
   private final EventService eventService;
+  private final SupportReportService supportReportService;
 
   public AdminController(JwtService jwtService,
                          LicenseService licenseService, DeviceService deviceService,
                          VersionService versionService, VersionPackageService versionPackageService,
                          ModelConfigService modelConfigService,
-                         EventService eventService) {
+                         EventService eventService,
+                         SupportReportService supportReportService) {
     this.jwtService = jwtService;
     this.licenseService = licenseService;
     this.deviceService = deviceService;
@@ -62,6 +73,7 @@ public class AdminController {
     this.versionPackageService = versionPackageService;
     this.modelConfigService = modelConfigService;
     this.eventService = eventService;
+    this.supportReportService = supportReportService;
   }
 
   /**
@@ -82,6 +94,11 @@ public class AdminController {
     map.put("errors24h", eventService.count(Wrappers.lambdaQuery(ClientEvent.class)
         .eq(ClientEvent::getLevel, "error")
         .gt(ClientEvent::getCreatedAt, LocalDateTime.now().minusDays(1))));
+    map.put("reports", supportReportService.count());
+    map.put("reports24h", supportReportService.count(Wrappers.lambdaQuery(SupportReport.class)
+        .gt(SupportReport::getCreatedAt, LocalDateTime.now().minusDays(1))));
+    map.put("reportsPending", supportReportService.count(Wrappers.lambdaQuery(SupportReport.class)
+        .eq(SupportReport::getStatus, "submitted")));
     LocalDateTime todayStart = LocalDate.now().atStartOfDay();
     long gatewaySuccessToday = eventService.count(Wrappers.lambdaQuery(ClientEvent.class)
         .eq(ClientEvent::getEventType, "gateway_start_success")
@@ -299,6 +316,74 @@ public class AdminController {
     body.put("total", result.getTotal());
     body.put("size", result.getSize());
     return ApiResponse.ok(body);
+  }
+
+  /**
+   * 反馈列表 —— 售后「一键提交日志」记录，支持场景/状态/授权/版本/关键字筛选。
+   */
+  @GetMapping("/reports")
+  public ApiResponse<?> reports(@RequestHeader(value = "Authorization", required = false) String authorization,
+                                @RequestParam(defaultValue = "1") int page,
+                                @RequestParam(defaultValue = "20") int pageSize,
+                                @RequestParam(defaultValue = "") String scene,
+                                @RequestParam(defaultValue = "") String status,
+                                @RequestParam(defaultValue = "") String licenseKey,
+                                @RequestParam(defaultValue = "") String clientVersion,
+                                @RequestParam(defaultValue = "") String keyword) {
+    check(authorization);
+    int safePage = Math.max(page, 1);
+    int safePageSize = Math.min(Math.max(pageSize, 1), 100);
+    var wrapper = Wrappers.lambdaQuery(SupportReport.class).orderByDesc(SupportReport::getId);
+    if (!scene.isBlank()) wrapper.eq(SupportReport::getScene, scene.trim());
+    if (!status.isBlank()) wrapper.eq(SupportReport::getStatus, status.trim());
+    if (!licenseKey.isBlank()) wrapper.like(SupportReport::getLicenseKey, licenseKey.trim());
+    if (!clientVersion.isBlank()) wrapper.like(SupportReport::getClientVersion, clientVersion.trim());
+    if (!keyword.isBlank()) {
+      String kw = keyword.trim();
+      wrapper.and(item -> item.like(SupportReport::getReportNo, kw)
+          .or().like(SupportReport::getErrorSummary, kw)
+          .or().like(SupportReport::getHostname, kw));
+    }
+    return ApiResponse.ok(supportReportService.page(new Page<>(safePage, safePageSize), wrapper));
+  }
+
+  /**
+   * 反馈详情。
+   */
+  @GetMapping("/reports/{id}")
+  public ApiResponse<?> reportDetail(@RequestHeader(value = "Authorization", required = false) String authorization,
+                                     @PathVariable Long id) {
+    check(authorization);
+    SupportReport report = supportReportService.getById(id);
+    if (report == null) throw new IllegalArgumentException("反馈记录不存在：" + id);
+    return ApiResponse.ok(report);
+  }
+
+  /**
+   * 更新反馈 —— 流转处理状态（submitted/triaged/resolved/ignored）或追加客服备注。
+   */
+  @PatchMapping("/reports/{id}")
+  public ApiResponse<?> updateReport(@RequestHeader(value = "Authorization", required = false) String authorization,
+                                     @PathVariable Long id, @RequestBody SupportReportUpdateRequest req) {
+    check(authorization);
+    return ApiResponse.ok(supportReportService.updateStatus(id, req.status(), req.adminNote()));
+  }
+
+  /**
+   * 下载日志包 —— JWT 鉴权后返回 zip 附件；文件已被清理时返回 404。
+   */
+  @GetMapping("/reports/{id}/download")
+  public ResponseEntity<Resource> downloadReport(@RequestHeader(value = "Authorization", required = false) String authorization,
+                                                @PathVariable Long id) {
+    check(authorization);
+    SupportReport report = supportReportService.getById(id);
+    if (report == null) throw new IllegalArgumentException("反馈记录不存在：" + id);
+    Path file = supportReportService.filePath(report);
+    if (file == null) return ResponseEntity.notFound().build();
+    return ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + report.getReportNo() + ".zip\"")
+        .body(new FileSystemResource(file));
   }
 
   /**

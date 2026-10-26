@@ -1,5 +1,9 @@
 server:
   port: 15000
+  tomcat:
+    # 日志包超过应用层上限被拒时，保证客户端仍能收到 JSON 错误响应（
+    # Tomcat 默认只吞掉剩余 2MB 请求体，超出会直接断连，客户端只能看到网络错误）
+    max-swallow-size: 64MB
 
 spring:
   application:
@@ -35,5 +39,17 @@ xlx:
   admin-password: ${XLX_ADMIN_PASSWORD:80W24da4C22X}
   upload-dir: ${XLX_UPLOAD_DIR:data/uploads/versions}
   version-files-dir: ${XLX_VERSION_FILES_DIR:data/uploads/version-files}
+  # 售后反馈日志包存储目录（不对外直链，仅后台鉴权下载）
+  report-dir: ${XLX_REPORT_DIR:data/uploads/reports}
+  # 单个日志包大小上限，默认 50MB
+  report-max-bytes: ${XLX_REPORT_MAX_BYTES:52428800}
+  # 客户端内置 secret，用于一键提交日志的 HMAC 签名（签名串：ts + 换行 + reportNo）
+  client-secret: ${XLX_CLIENT_SECRET:change-me-client-report-secret}
+  # 是否强制校验签名。客户端未接入签名前保持 false，全量升级后置 true
+  report-sign-required: ${XLX_REPORT_SIGN_REQUIRED:false}
+  # 日志包保留天数，超过该天数的记录与文件会被定时清理（<= 0 表示不自动清理）
+  report-retention-days: ${XLX_REPORT_RETENTION_DAYS:90}
+  # 清理任务执行计划（6 段 cron：秒 分 时 日 月 周），默认每天 03:10
+  report-cleanup-cron: "${XLX_REPORT_CLEANUP_CRON:0 10 3 * * *}"
   delta-enabled-platforms: ${XLX_DELTA_PLATFORMS:windows}
   public-base-url: ${XLX_PUBLIC_BASE_URL:}

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>小龙虾后台</title>
-  <link rel="stylesheet" href="./style.css?v=2026072905">
+  <link rel="stylesheet" href="./style.css?v=2026102601">
 </head>
 <body>
   <section id="loginPage" class="login-page">
@@ -37,6 +37,7 @@
       <button data-tab="versions" type="button">版本</button>
       <button data-tab="models" type="button">模型</button>
       <button data-tab="events" type="button">日志</button>
+      <button data-tab="reports" type="button">反馈</button>
     </aside>
 
     <main>
@@ -132,9 +133,37 @@
         <table id="eventTable"></table>
         <div id="eventPager" class="pager"></div>
       </section>
+
+      <section id="reports" class="panel">
+        <h2>售后反馈（一键提交日志）</h2>
+        <p class="panel-tip">客户端在启动修复 / 重置失败时一键上传的日志包。状态处理与客服备注可直接在详情里修改，日志包仅供后台鉴权下载。</p>
+        <div class="section-search license-search report-search">
+          <input id="reportKeywordSearch" type="text" placeholder="回执码 / 错误摘要 / 机器名">
+          <select id="reportSceneSearch">
+            <option value="">全部场景</option>
+            <option value="reset_failed">重置失败</option>
+            <option value="repair_failed">启动修复失败</option>
+            <option value="startup_failed">启动失败</option>
+            <option value="update_failed">更新失败</option>
+            <option value="manual">用户主动提交</option>
+            <option value="other">其他</option>
+          </select>
+          <select id="reportStatusSearch">
+            <option value="">全部状态</option>
+            <option value="submitted">待处理</option>
+            <option value="triaged">已受理</option>
+            <option value="resolved">已解决</option>
+            <option value="ignored">已忽略</option>
+          </select>
+          <input id="reportLicenseKeySearch" type="text" placeholder="授权码">
+          <button id="reportSearchBtn" type="button">查询</button>
+        </div>
+        <table id="reportTable"></table>
+        <div id="reportPager" class="pager"></div>
+      </section>
     </main>
   </div>
 
-  <script src="./app.js?v=2026080501"></script>
+  <script src="./app.js?v=2026102601"></script>
 </body>
 </html>

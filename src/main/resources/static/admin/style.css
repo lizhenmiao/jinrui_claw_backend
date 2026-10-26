@@ -237,6 +237,17 @@ main {
   grid-template-columns: minmax(230px, 1.7fr) minmax(120px, 1fr) minmax(120px, 1fr) 140px auto;
 }
 
+.report-search {
+  grid-template-columns: minmax(200px, 1.6fr) minmax(130px, 1fr) minmax(130px, 0.8fr) minmax(150px, 1fr) auto;
+}
+
+.panel-tip {
+  margin: -8px 0 14px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 h2 {
   margin: 0 0 16px;
   font-size: 20px;

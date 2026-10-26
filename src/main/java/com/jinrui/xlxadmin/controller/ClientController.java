@@ -1,16 +1,19 @@
 package com.jinrui.xlxadmin.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jinrui.xlxadmin.dto.ApiResponse;
 import com.jinrui.xlxadmin.dto.ClientDtos.ClientEventRequest;
 import com.jinrui.xlxadmin.dto.ClientDtos.DevicePingRequest;
 import com.jinrui.xlxadmin.dto.ClientDtos.LicenseCheckRequest;
 import com.jinrui.xlxadmin.dto.ClientDtos.ModelConfigRequest;
+import com.jinrui.xlxadmin.dto.ClientDtos.SupportReportMeta;
 import com.jinrui.xlxadmin.dto.ClientDtos.UpdateCheckRequest;
 import com.jinrui.xlxadmin.entity.LicenseRecord;
 import com.jinrui.xlxadmin.service.DeviceService;
 import com.jinrui.xlxadmin.service.EventService;
 import com.jinrui.xlxadmin.service.LicenseService;
 import com.jinrui.xlxadmin.service.ModelConfigService;
+import com.jinrui.xlxadmin.service.SupportReportService;
 import com.jinrui.xlxadmin.service.VersionService;
 import com.jinrui.xlxadmin.service.impl.VersionFileStore;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 客户端接口 —— 给小龙虾U盘程序提供授权校验、心跳、更新检查、模型同步、事件上报。
@@ -40,17 +44,22 @@ public class ClientController {
   private final VersionService versionService;
   private final ModelConfigService modelConfigService;
   private final EventService eventService;
+  private final SupportReportService supportReportService;
   private final VersionFileStore versionFileStore;
+  private final ObjectMapper objectMapper;
 
   public ClientController(LicenseService licenseService, DeviceService deviceService,
                           VersionService versionService, ModelConfigService modelConfigService,
-                          EventService eventService, VersionFileStore versionFileStore) {
+                          EventService eventService, SupportReportService supportReportService,
+                          VersionFileStore versionFileStore, ObjectMapper objectMapper) {
     this.licenseService = licenseService;
     this.deviceService = deviceService;
     this.versionService = versionService;
     this.modelConfigService = modelConfigService;
     this.eventService = eventService;
+    this.supportReportService = supportReportService;
     this.versionFileStore = versionFileStore;
+    this.objectMapper = objectMapper;
   }
 
   /**
@@ -113,5 +122,29 @@ public class ClientController {
   @PostMapping("/event")
   public ApiResponse<?> event(@RequestBody ClientEventRequest req, HttpServletRequest http) {
     return ApiResponse.ok(eventService.record(req, http));
+  }
+
+  /**
+   * 一键提交日志 —— 客户端启动修复/重置失败时上传诊断日志包
+   * （multipart：file = zip 日志包，meta = JSON 元数据，字段见 ClientDtos.SupportReportMeta）。
+   * 宽松校验：不检查授权可用状态，用可选 HMAC 签名 / 频率限流 / 回执码幂等兜底。
+   */
+  @PostMapping(value = "/report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ApiResponse<?> submitReport(@RequestParam(value = "meta", required = false) String metaJson,
+                                     @RequestParam("file") MultipartFile file,
+                                     HttpServletRequest http) {
+    return ApiResponse.ok("日志已提交", supportReportService.submit(parseReportMeta(metaJson), file, http));
+  }
+
+  /** meta 缺省时按空元数据兜底（保证最坏情况下也能把日志传上来）；提供但非法则报错便于联调。 */
+  private SupportReportMeta parseReportMeta(String metaJson) {
+    if (metaJson == null || metaJson.isBlank()) return null;
+    // Windows 侧写出的 JSON 常带 UTF-8 BOM，Jackson 会直接报错，先剥离
+    String payload = metaJson.charAt(0) == '\uFEFF' ? metaJson.substring(1) : metaJson;
+    try {
+      return objectMapper.readValue(payload, SupportReportMeta.class);
+    } catch (Exception e) {
+      throw new IllegalArgumentException("meta 不是合法 JSON：" + e.getMessage());
+    }
   }
 }

@@ -55,4 +55,10 @@ public final class AdminDtos {
       String modelGroup,
       Boolean forceDefault
   ) {}
+
+  public record SupportReportUpdateRequest(
+      // submitted/triaged/resolved/ignored；为空时只更新备注
+      String status,
+      String adminNote
+  ) {}
 }
